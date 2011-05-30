@@ -1,5 +1,6 @@
 #!/usr/bin/python 
 #-*- coding: latin1 -*-
+#last edit: Forbedrede brugermeddelelser, simlk maj 2011
 import sys
 import time
 PROGRAM="Schramm"
@@ -116,7 +117,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 			nospaces+=1
 	if nospaces==1 or (nospaces==2 and lines[-1].strip()=="@="):
 		Log("Linie %i, punkt %s: Tom beskrivelse!!" %(N,P),logfile)
-		return lines,alreadyfound
+		return lines,alreadyfound,True
 	for j in range(0,len(lines)):
 		#rline=lines[j]  #som default er den rettede linie det samme som input,
 		line=lines[j].strip()
@@ -219,9 +220,9 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 		elif i==0:
 			foundstars+=1
 			lbem=len(line)-1#bruges ikke
-			j=line.find("rev")
-			if j!=-1:
-				if line[j+3]!=".":
+			k=line.find("rev") #aendret fra 'j', da dette indeks allerede bruges som linietaeller i bsk.
+			if k!=-1:
+				if line[k+3]!=".":
 					line=line.replace("rev","Rev.")
 					word="rev"
 					rword="Rev."
@@ -249,23 +250,31 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 				if testline[0] not in GOODCOMMENTS_PREFIXES:
 					Log("Linie %i, punkt %s: Bemærkningen efter *-tegn starter ikke ikke korrekt, eller indeholder flere net-beskrivelser." %(N+j,P),logfile)
 		retlines.append(line)
+	something_wrong=False
 	if Nret>0:
 		Log("Punkt %s, lavede %i rettelse(r)." %(P,Nret),logfile)
+		something_wrong=True
 	if founddollar>1 or foundafm>1 or foundpound>1:
 		Log("Linie %i, punkt %s: Noget galt fandt flere af samme kodetegn, måske to beskrivelser uden afgrænsning?" %(N,P),logfile)
+		something_wrong=True
 	if foundhash==0:
 		Log("Linie %i, punkt %s: Fandt ikke #-tegn." %(N,P),logfile)
+		something_wrong=True
 	if founddollar==0:
 		Log("Linie %i, punkt %s: Fandt ikke $-tegn." %(N,P),logfile)
+		something_wrong=True
 	if foundpound==0:
 		Log("Linie %i, punkt %s: Fandt ikke £-tegn." %(N,P),logfile)
+		something_wrong=True
 	if foundafm==0:
 		Log("Linie %i, punkt %s: Fandt ikke <-tegn." %(N,P),logfile)
 	if foundstars==0:
 		Log("Linie %i, punkt %s: Fandt ikke *-tegn." %(N,P),logfile)
+		something_wrong=True
 	if lines[-1].strip()!="@=":
 		Log("Linie %i, punkt %s: Beskrivelse ender ikke med @=." %(N,P),logfile)
-	return retlines,alreadyfound
+		something_wrong=True
+	return retlines,alreadyfound,something_wrong
 def main(args,exit=True):
 	if len(args)<2:
 		Usage()
@@ -309,8 +318,13 @@ def main(args,exit=True):
 	Log("Kører program %s, %s." %(PROGRAM,time.asctime()),log)
 	Log("Fandt %i punktbeskrivelser i %s." %(len(Bsk),indfil),log)
 	linenumber=0
+	last_wrong=0
 	for bsk in Bsk:
-		retlines,alreadyfound=TjekBeskrivelse(bsk,linenumber+1,log,Stations) #Stations aendres i Tjeb. bsk.
+		retlines,alreadyfound,something_wrong=TjekBeskrivelse(bsk,linenumber+1,log,Stations) #Stations aendres i Tjeb. bsk.
+		if something_wrong:
+			Log("Antal linier frem fra (slutningen) af sidste beskrivelse med fejl/rettelser: %i" %(linenumber-last_wrong),log)
+			last_wrong=linenumber+len(bsk)
+			Log("%s" %("*"*60),log)
 		Ndoubles+=alreadyfound #hvis stationen var beskrevet i forvejen!
 		linenumber+=len(bsk)
 		for line in retlines:
