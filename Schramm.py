@@ -107,6 +107,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 	foundhash=0
 	lbem=0
 	Nret=0
+	Nwarn=0
 	nospaces=0
 	if lines[0].strip()[-1]!=":":
 		Log("Linie %i, punkt %s: Intet ':' efter punktnavn- Retter dette." %(N,P),logfile)
@@ -124,6 +125,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 		i=line.find("$")
 		if i!=-1 and i!=0:
 			Log("Linie %i, punkt %s: Forkert placering af $-tegn." %(N+j,P),logfile)
+			Nwarn+=1
 		elif i==0: # saa korrekt placering
 			founddollar+=1
 			splitline=line.split()
@@ -131,6 +133,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 				pass
 			if len(splitline) not in [2,4]: #tjekker primaert for manglende m tegn
 				Log("Linie %i, punkt %s: Forkert antal ord efter $-tegn." %(N+j,P),logfile)
+				Nwarn+=1
 				if len(splitline)==3:
 					if line.find("m")==-1:
 						try:
@@ -155,6 +158,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 						Log("Linie %i, punkt %s: Erstatter '%s' med '%s'." %(N+j,P,terraenbsk,BADTYPES[ord]),logfile)
 					else:
 						Log("Linie %i, punkt %s: Kunne ikke genkende terrænbeskrivelse '%s'." %(N+j,P,terraenbsk),logfile)
+						Nwarn+=1
 				elif 0.3<sim<0.7 or 2<dist<5:
 					Log("Linie %i, punkt %s: %s\n'%s' kunne være '%s'." %(N+j,P,line,terraenbsk,ord),logfile)
 					if JaNej("Mente du %s?" %(line.replace(terraenbsk,ord))):
@@ -163,12 +167,14 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 						Log("OK, erstatter '%s' med '%s'." %(terraenbsk,ord),logfile)
 					else:
 						Log("OK, erstatter ikke...",logfile)
+						Nwarn+=1
 				elif 0.7<=sim and dist!=0:
 					Nret+=1
 					line=line.replace(terraenbsk,ord)
 					Log("Linie %i, punkt %s: Erstatter '%s' med '%s'" %(N+j,P,terraenbsk,ord),logfile)
 				elif dist!=0:
 					Log("Linie %i, punkt %s: Kunne ikke genkende terrænbeskrivelse '%s'." %(N+j,P,terraenbsk),logfile)
+					Nwarn+=1
 				if line[-1]!=".":  #indsaet . til sidst
 					line+="."
 					Log("Linie %i, punkt %s: Tilføjer '.' efter terrænbeskrivelse" %(N+j,P),logfile)
@@ -176,6 +182,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 		i=line.find("£")
 		if i!=-1 and i!=0:
 			Log("Linie %i, punkt %s: Forkert placering af £-tegn." %(N+j,P),logfile)
+			Nwarn+=1
 		elif i==0:
 			gpsline=line[1:]  #ikke kodetegn med...
 			if gpsline[-1]==".":
@@ -194,12 +201,14 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 					Nret+=1
 				else:
 					Log("OK, erstatter ikke...",logfile)
+					Nwarn+=1
 			elif 0.7<=sim and dist!=0:
 				Log("Linie %i, punkt %s: Erstatter '%s' med '%s'" %(N+j,P,gpsline,gpsbsk),logfile)
 				line="£"+gpsbsk+"."
 				Nret+=1
 			elif dist!=0:
 				Log("Linie %i, punkt %s: Kunne ikke genkende gps-beskrivelse." %(N+j,P),logfile)
+				Nwarn+=1
 			if line[-1]!=".":  #indsaet . til sidst
 				line+="."
 				Log("Linie %i, punkt %s: Tilføjer '.' efter gps-beskrivelse." %(N+j,P),logfile)
@@ -207,19 +216,22 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 		i=line.find("#")
 		if i!=-1 and i!=0:
 			Log("Linie %i, punkt %s: Forkert placering af #-tegn." %(N+j,P),logfile)
+			Nwarn+=1
 		elif i==0:
 			foundhash+=1
 		i=line.find("<")
 		if i!=-1 and i!=0:
 			Log("Linie %i, punkt %s: Forkert placering af <-tegn." %(N+j,P),logfile)
+			Nwarn+=1
 		elif i==0:
 			foundafm+=1
 		i=line.find("*")
 		if i!=-1 and i!=0:
 			Log("Linie %i, punkt %s: Forkert placering af *-tegn." %(N+j,P),logfile)
+			Nwarn+=1
 		elif i==0:
 			foundstars+=1
-			lbem=len(line)-1#bruges ikke
+			lbem=len(line)-1
 			k=line.find("rev") #aendret fra 'j', da dette indeks allerede bruges som linietaeller i bsk.
 			if k!=-1:
 				if line[k+3]!=".":
@@ -235,6 +247,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 				
 			if lbem==0:
 				Log("Linie %i, punkt %s: Ingen bemærkning efter *-tegn." %(N+j,P),logfile)
+				Nwarn+=1
 			else:
 				found=False
 				for word in MUST_FIND_COMMENTS:
@@ -244,11 +257,20 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 						break
 				if not found:
 					Log("Linie %i, punkt %s: 'Rev.' eller 'Nyetab.' ikke fundet efter *-tegn." %(N+j,P),logfile)
+					Nwarn+=1
 				elif len(line[i:].split())<3:
 					Log("Linie %i, punkt %s: Hmmm, noget galt med bemærkningen efter *-tegn." %(N+j,P),logfile)
+					Nwarn+=1
 				testline=line[1:].split()
 				if testline[0] not in GOODCOMMENTS_PREFIXES:
 					Log("Linie %i, punkt %s: Bemærkningen efter *-tegn starter ikke ikke korrekt, eller indeholder flere net-beskrivelser." %(N+j,P),logfile)
+					Nwarn+=1
+				for word in GOODCOMMENTS:
+					sim=Similarity(line.lower(),word.lower())
+					if sim>0.25 and not(word in line):
+						Log("Linie %i, punkt %s: Tilsyneladende syntaksfejl i bemærkning. Måske menes der '%s'?" %(N+j,P,word),logfile)
+						Nwarn+=1
+					
 		retlines.append(line)
 	something_wrong=False
 	if Nret>0:
@@ -256,23 +278,29 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 		something_wrong=True
 	if founddollar>1 or foundafm>1 or foundpound>1:
 		Log("Linie %i, punkt %s: Noget galt fandt flere af samme kodetegn, måske to beskrivelser uden afgrænsning?" %(N,P),logfile)
-		something_wrong=True
+		Nwarn+=1
 	if foundhash==0:
 		Log("Linie %i, punkt %s: Fandt ikke #-tegn." %(N,P),logfile)
-		something_wrong=True
+		Nwarn+=1
 	if founddollar==0:
 		Log("Linie %i, punkt %s: Fandt ikke $-tegn." %(N,P),logfile)
-		something_wrong=True
+		Nwarn+=1
 	if foundpound==0:
 		Log("Linie %i, punkt %s: Fandt ikke £-tegn." %(N,P),logfile)
-		something_wrong=True
+		Nwarn+=1
 	if foundafm==0:
 		Log("Linie %i, punkt %s: Fandt ikke <-tegn." %(N,P),logfile)
 	if foundstars==0:
 		Log("Linie %i, punkt %s: Fandt ikke *-tegn." %(N,P),logfile)
-		something_wrong=True
+		Nwarn+=1
 	if lines[-1].strip()!="@=":
 		Log("Linie %i, punkt %s: Beskrivelse ender ikke med @=." %(N,P),logfile)
+		Nwarn+=1
+	if Nwarn>0:
+		if Nwarn==1:
+			Log("Punkt %s, 1 advarsel." %P,logfile)
+		else:
+			Log("Punkt %s, %i advarsler." %(P,Nwarn),logfile)
 		something_wrong=True
 	return retlines,alreadyfound,something_wrong
 def main(args,exit=True):
@@ -317,14 +345,15 @@ def main(args,exit=True):
 			bsknospace=0
 	Log("Kører program %s, %s." %(PROGRAM,time.asctime()),log)
 	Log("Fandt %i punktbeskrivelser i %s." %(len(Bsk),indfil),log)
+	Log("%s" %("*"*65),log)
 	linenumber=0
 	last_wrong=0
 	for bsk in Bsk:
 		retlines,alreadyfound,something_wrong=TjekBeskrivelse(bsk,linenumber+1,log,Stations) #Stations aendres i Tjeb. bsk.
 		if something_wrong:
-			Log("Antal linier frem fra (slutningen) af sidste beskrivelse med fejl/rettelser: %i" %(linenumber-last_wrong),log)
+			Log("%i linier frem fra sidste beskrivelse med fejl/rettelser." %(linenumber-last_wrong),log)
 			last_wrong=linenumber+len(bsk)
-			Log("%s" %("*"*60),log)
+			Log("%s" %("*"*65),log)
 		Ndoubles+=alreadyfound #hvis stationen var beskrevet i forvejen!
 		linenumber+=len(bsk)
 		for line in retlines:
