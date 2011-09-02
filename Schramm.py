@@ -1,9 +1,9 @@
 #!/usr/bin/python 
 #-*- coding: latin1 -*-
-#last edit: Forbedrede brugermeddelelser, simlk maj 2011
+#last edit: Forbedrede brugermeddelelser, simlk aug. 2011
 import sys
 import time
-PROGRAM="Schramm"
+PROGRAM="Schramm v.1.0"
 Badtypes=["jordoverflade"]
 TTYPES=["asfalt","beton","flise","gulv","terræn","klippe","perron","tag","dige","dæksel","kørebanebelægning"]
 TTYPES.extend(Badtypes) #illegale ord ogsaa med her... SKAL vaere samme som kets i BADTYPES!
@@ -46,7 +46,7 @@ def CompareThis(line):
 		line+=words[i]+" "
 	if len(words)>1:
 		line+=words[-1]
-	return line.lower()
+	return line.lower().replace("-"," ")
 def Worddistance(w1,w2):
 	d=0
 	l=min(len(w1),len(w2))
@@ -83,7 +83,7 @@ def FindClosestWord(word,checklist):
 	smax=-10000
 	closest=word
 	for test in checklist:
-		sim=Similarity(CompareThis(word),test.lower()) #tjek lighed mellem lower-case udgaver.
+		sim=Similarity(CompareThis(word),CompareThis(test)) #tjek lighed mellem lower-case udgaver.
 		if sim>smax:
 			closest=test
 			smax=sim
@@ -193,7 +193,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 				Log("Linie %i, punkt %s: Erstatter '%s' med '%s'." %(N+j,P,gpsline,BADGPS[gpsbsk]),logfile)
 				line="£"+BADGPS[gpsbsk]+"." # erstat som standard! Efter Logning, da line bruges her,
 				Nret+=1
-			elif 0.3<sim<0.7:
+			elif 0.3<sim<0.77:
 				Log("Linie %i, punkt %s: %s." %(N+j,P,gpsline),logfile)
 				if JaNej("Mente du %s?" %(gpsbsk)):
 					Log("OK, erstatter '%s' med '%s'." %(gpsline,gpsbsk),logfile)
@@ -202,7 +202,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 				else:
 					Log("OK, erstatter ikke...",logfile)
 					Nwarn+=1
-			elif 0.7<=sim and dist!=0:
+			elif 0.77<=sim and dist!=0:
 				Log("Linie %i, punkt %s: Erstatter '%s' med '%s'" %(N+j,P,gpsline,gpsbsk),logfile)
 				line="£"+gpsbsk+"."
 				Nret+=1
@@ -256,7 +256,7 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 						found=True
 						break
 				if not found:
-					Log("Linie %i, punkt %s: 'Rev.' eller 'Nyetab.' ikke fundet efter *-tegn." %(N+j,P),logfile)
+					Log("Linie %i, punkt %s: '%s' eller '%s' ikke fundet efter *-tegn." %(N+j,P,MUST_FIND_COMMENTS[0],MUST_FIND_COMMENTS[1]),logfile)
 					Nwarn+=1
 				elif len(line[i:].split())<3:
 					Log("Linie %i, punkt %s: Hmmm, noget galt med bemærkningen efter *-tegn." %(N+j,P),logfile)
