@@ -8,10 +8,10 @@ Badtypes=["jordoverflade"]
 TTYPES=["asfalt","beton","flise","gulv","terræn","klippe","perron","tag","dige","dæksel","kørebanebelægning"]
 TTYPES.extend(Badtypes) #illegale ord ogsaa med her... SKAL vaere samme som kets i BADTYPES!
 BADTYPES={Badtypes[0]:"terræn"} #forkerte navne og erstatninger
-Badgps=["GPS-status ukendt"] #SKAL vaere samme som keys i BADGPS
+BADGPS=["GPS-status ukendt","GPS-egnethed ukendt"] #SKAL vaere samme som keys i BADGPS
 GPSBSK=["gps-egnet","Ej umiddelbart gps-egnet","Ej gps-egnet","GPS-egnethed ukendt"]
-GPSBSK.extend(Badgps)
-BADGPS={Badgps[0]:"GPS-egnethed ukendt"} #erstatninger
+GPSBSK.extend(BADGPS)
+#BADGPS={Badgps[0]:"GPS-egnethed ukendt",Badgps[1]:} #erstatninger
 GOODCOMMENTS=["RefDK.","5dnet.","10 km-net."]
 GOODCOMMENTS_PREFIXES=["Rev.","RefDK.","5dnet.","10","Nyetb.","Nyetbl.","Nyetableret"]
 MUST_FIND_COMMENTS=["Rev.","Nyetb.","Nyetbl.","Nyetableret"]
@@ -189,10 +189,14 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 				gpsline=gpsline[0:-1] #slet sidste "." for sammenligning
 			foundpound+=1
 			gpsbsk, dist, sim=FindClosestWord(gpsline,GPSBSK)
-			if BADGPS.has_key(gpsbsk): #erstat uanset ord-afstand...
-				Log("Linie %i, punkt %s: Erstatter '%s' med '%s'." %(N+j,P,gpsline,BADGPS[gpsbsk]),logfile)
-				line="£"+BADGPS[gpsbsk]+"." # erstat som standard! Efter Logning, da line bruges her,
-				Nret+=1
+			if gpsbsk in BADGPS: #erstat uanset ord-afstand...
+				if dist>0:
+					Log("Linie %i, punkt %s: '%s' genkendt som '%s', IKKE tilladt bsk.!" %(N+j,P,gpsline,gpsbsk),logfile)
+				else:
+					Log("Linie %i, punkt %s: '%s', IKKE tilladt gps-bsk.!" %(N+j,P,gpsline),logfile)
+				#line="£"+BADGPS[gpsbsk]+"." # erstat som standard! Efter Logning, da line bruges her,
+				#Nret+=1
+				Nwarn+=1
 			elif 0.3<sim<0.77:
 				Log("Linie %i, punkt %s: %s." %(N+j,P,gpsline),logfile)
 				if JaNej("Mente du %s?" %(gpsbsk)):
