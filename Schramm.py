@@ -3,7 +3,7 @@
 #last edit: Forbedrede brugermeddelelser, simlk aug. 2011
 import sys
 import time
-PROGRAM="Schramm v.1.0"
+PROGRAM="Schramm v.1.1 2011-11-29"
 Badtypes=["jordoverflade"]
 TTYPES=["asfalt","beton","flise","gulv","terræn","klippe","perron","tag","dige","dæksel","kørebanebelægning"]
 TTYPES.extend(Badtypes) #illegale ord ogsaa med her... SKAL vaere samme som kets i BADTYPES!
@@ -328,6 +328,7 @@ def main(args,exit=True):
 	bsk=[]
 	foundpoint=False #til at skippe tomme linier mellem punktbeskrivelser.
 	bsknospace=0 #til at taelle ikke tomme linier
+	Log("Kører program %s, %s." %(PROGRAM,time.asctime()),log)
 	for i in range(0,len(Lines)):
 		line=Lines[i]
 		if (not foundpoint) and not line.isspace():
@@ -347,8 +348,11 @@ def main(args,exit=True):
 			bsk=[]
 			foundpoint=False
 			bsknospace=0
-	Log("Kører program %s, %s." %(PROGRAM,time.asctime()),log)
 	Log("Fandt %i punktbeskrivelser i %s." %(len(Bsk),indfil),log)
+	if bsknospace>0:
+		Log("Der er muligvis en beskrivelse i sidst i filen, som ikke er afsluttet med '@='!",log)
+		Log("Tilføjer denne beskrivelse!",log)
+		Bsk.append(bsk)
 	Log("%s" %("*"*65),log)
 	linenumber=0
 	last_wrong=0
