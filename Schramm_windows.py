@@ -32,7 +32,7 @@ class MainFrame(wx.Frame): #windows only
 		self.SetSizer(self.sizer)
 		self.sizer.FitInside(self)
 		sys.stdout=self
-		self.Log("Velkommen til program %s." %PROGRAM)
+		self.Log("Velkommen til program %s. Schramm version: %s" %(PROGRAM,Schramm.PROGRAM))
 	def OnClose(self,event):
 		self.Close()
 	def OnFil(self,event):
