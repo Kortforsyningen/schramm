@@ -179,6 +179,10 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 					line+="."
 					Log("Linie %i, punkt %s: Tilføjer '.' efter terrænbeskrivelse" %(N+j,P),logfile)
 					Nret+=1
+		
+		sokkelfind=line.find("sokkel.")
+		if sokkelfind!=-1:
+			line=line.replace("sokkel.", "sokkelkant.")
 		i=line.find("£")
 		if i!=-1 and i!=0:
 			Log("Linie %i, punkt %s: Forkert placering af £-tegn." %(N+j,P),logfile)
