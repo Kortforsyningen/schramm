@@ -183,6 +183,8 @@ def TjekBeskrivelse(lines,N,logfile,Stations): #linier og startlinienummer, logf
 		sokkelfind=line.find("sokkel.")
 		if sokkelfind!=-1:
 			line=line.replace("sokkel.", "sokkelkant.")
+			Log("Linie %i, punkt %s: Erstatter 'sokkel' med 'sokkelkant'." %(N+j,P),logfile)
+			Nret+=1
 		i=line.find("£")
 		if i!=-1 and i!=0:
 			Log("Linie %i, punkt %s: Forkert placering af £-tegn." %(N+j,P),logfile)
@@ -357,15 +359,16 @@ def main(args,exit=True):
 		Log("Der er muligvis en beskrivelse i sidst i filen, som ikke er afsluttet med '@='!",log)
 		Log("Tilføjer denne beskrivelse!",log)
 		Bsk.append(bsk)
-	Log("%s" %("*"*65),log)
+	Log("%s" %("*"*75),log)
+	Log("%s" %("*"*75),log)
 	linenumber=0
 	last_wrong=0
 	for bsk in Bsk:
-		retlines,alreadyfound,something_wrong=TjekBeskrivelse(bsk,linenumber+1,log,Stations) #Stations aendres i Tjeb. bsk.
+		retlines,alreadyfound,something_wrong=TjekBeskrivelse(bsk,linenumber+1,log,Stations) #Stations aendres i Tjekbsk.
 		if something_wrong:
-			Log("%i linier frem fra sidste beskrivelse med fejl/rettelser." %(linenumber-last_wrong),log)
+			#Log("%i linier frem fra sidste beskrivelse med fejl/rettelser." %(linenumber-last_wrong),log)
 			last_wrong=linenumber+len(bsk)
-			Log("%s" %("*"*65),log)
+			Log("%s" %("*"*71),log)
 		Ndoubles+=alreadyfound #hvis stationen var beskrevet i forvejen!
 		linenumber+=len(bsk)
 		for line in retlines:
